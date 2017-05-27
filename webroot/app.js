@@ -61,7 +61,7 @@ $(function() {
       success: function(data) {
         console.log("Got response: ", data);
         $("#addServiceModal").modal("toggle");
-        $("form#add-service-form").reset();
+        $("form#add-service-form").trigger("reset");
         updateServerList();
       }
     });
