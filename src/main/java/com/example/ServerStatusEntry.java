@@ -28,4 +28,22 @@ public class ServerStatusEntry {
         this.status = "UNKNOWN";
         this.lastCheck = "1970-01-01 00:00";
     }
+
+    public ServerStatusEntry(
+            @JsonProperty("id")
+            String id,
+            @JsonProperty("name")
+            String name,
+            @JsonProperty("url")
+            String url,
+            @JsonProperty("status")
+            String status,
+            @JsonProperty("lastCheck")
+            String lastCheck) {
+        this.id = id;
+        this.name = name;
+        this.url = url;
+        this.status = status;
+        this.lastCheck = lastCheck;
+    }
 }
