@@ -24,14 +24,14 @@ import java.util.*;
 
 class PollsterAPIVerticle extends AbstractVerticle {
     private final Logger logger = LoggerFactory.getLogger(PollsterAPIVerticle.class);
-    private final Map<String,ServerStatusEntry> entries = new HashMap<>();
+    private final Map<String,Service> entries = new HashMap<>();
     private final PriorityQueue<String> deadlineHeap = new PriorityQueue<>(this::compareEntries);
     private HttpClient client;
     private final String storageFilename = "services.json";
 
     private int compareEntries(String a, String b) {
-        ServerStatusEntry aEntry = entries.get(a);
-        ServerStatusEntry bEntry = entries.get(b);
+        Service aEntry = entries.get(a);
+        Service bEntry = entries.get(b);
 
         return aEntry.lastCheck.compareTo(bEntry.lastCheck);
     }
@@ -72,7 +72,7 @@ class PollsterAPIVerticle extends AbstractVerticle {
                 JsonArray arr = wrapperObj.getJsonArray("services");
                 for (int i = 0; i < arr.size(); i++) {
                     JsonObject obj = arr.getJsonObject(i);
-                    ServerStatusEntry entry = obj.mapTo(ServerStatusEntry.class);
+                    Service entry = obj.mapTo(Service.class);
                     entries.put(entry.id, entry);
                     deadlineHeap.add(entry.id);
                 }
@@ -90,7 +90,7 @@ class PollsterAPIVerticle extends AbstractVerticle {
     private void flushToStorage() {
         FileSystem fs = vertx.fileSystem();
 
-        List<ServerStatusEntry> entryList = new ArrayList<>(entries.size());
+        List<Service> entryList = new ArrayList<>(entries.size());
         entryList.addAll(entries.values());
 
         // Pack it into JSON for the response
@@ -113,7 +113,7 @@ class PollsterAPIVerticle extends AbstractVerticle {
 
     private String addEntry(String name, String url) {
         String uuid = UUID.randomUUID().toString();
-        ServerStatusEntry entry = new ServerStatusEntry(uuid, name, url);
+        Service entry = new Service(uuid, name, url);
         entries.put(uuid, entry);
         deadlineHeap.add(uuid);
         return uuid;
@@ -129,16 +129,16 @@ class PollsterAPIVerticle extends AbstractVerticle {
                 .withZone(ZoneId.systemDefault())
                 .format(Instant.now().minus(1, ChronoUnit.MINUTES));
 
-        ServerStatusEntry topEntry = entries.get(deadlineHeap.peek());
+        Service topEntry = entries.get(deadlineHeap.peek());
 
         while (deadlineHeap.size() > 0 && entries.get(deadlineHeap.peek()).lastCheck.compareTo(deadline) <= 0) {
-            final ServerStatusEntry entry = entries.get(deadlineHeap.poll());
+            final Service entry = entries.get(deadlineHeap.poll());
             logger.info("Deadline for {0} has passed, was {1}", entry.url, entry.lastCheck);
             checkStatus(entry);
         }
     }
 
-    private void checkStatus(final ServerStatusEntry entry) {
+    private void checkStatus(final Service entry) {
         logger.info("Making request to {0}", entry.url);
 
         if (entry.exceptionHandler == null) {
@@ -159,9 +159,9 @@ class PollsterAPIVerticle extends AbstractVerticle {
     }
 
     class HttpExceptionHandler implements Handler<Throwable> {
-        private ServerStatusEntry entry;
+        private Service entry;
 
-        public HttpExceptionHandler(ServerStatusEntry entry) {
+        public HttpExceptionHandler(Service entry) {
             this.entry = entry;
         }
 
@@ -195,7 +195,7 @@ class PollsterAPIVerticle extends AbstractVerticle {
 
     private void handleServerList(RoutingContext routingContext) {
         // Fetch a list of all the entries and sort them
-        List<ServerStatusEntry> entryList = new ArrayList<>(entries.size());
+        List<Service> entryList = new ArrayList<>(entries.size());
         entryList.addAll(entries.values());
 
         // Pack it into JSON for the response

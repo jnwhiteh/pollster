@@ -3,7 +3,7 @@ package com.example;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.vertx.core.Handler;
 
-public class ServerStatusEntry {
+public class Service {
     @JsonProperty
     String id;
 
@@ -21,7 +21,7 @@ public class ServerStatusEntry {
 
     protected Handler<Throwable> exceptionHandler;
 
-    public ServerStatusEntry(String id, String name, String url) {
+    public Service(String id, String name, String url) {
         this.id = id;
         this.name = name;
         this.url = url;
@@ -29,7 +29,7 @@ public class ServerStatusEntry {
         this.lastCheck = "1970-01-01 00:00";
     }
 
-    public ServerStatusEntry(
+    public Service(
             @JsonProperty("id")
             String id,
             @JsonProperty("name")
