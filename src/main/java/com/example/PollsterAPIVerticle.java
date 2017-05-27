@@ -18,7 +18,6 @@ import io.vertx.ext.web.handler.StaticHandler;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.HashSet;
 
 class PollsterAPIVerticle extends AbstractVerticle {
     private final Logger logger = LoggerFactory.getLogger(PollsterAPIVerticle.class);
