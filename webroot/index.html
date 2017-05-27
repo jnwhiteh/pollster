@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Pollster</title>
+
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="vendor/bootstrap-3.3.7.min.css">
+
+    <!-- Custom styles for this template -->
+    <link href="app.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+<body>
+
+
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">Pollster</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+            <!--<ul class="nav navbar-nav navbar-right">-->
+                <!--<li><a href="#">Dashboard</a></li>-->
+                <!--<li><a href="#">Settings</a></li>-->
+                <!--<li><a href="#">Profile</a></li>-->
+                <!--<li><a href="#">Help</a></li>-->
+            <!--</ul>-->
+            <!-- <form class="navbar-form navbar-right">
+                <input type="text" class="form-control" placeholder="Search...">
+            </form> -->
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-3 col-md-2 sidebar">
+            <ul class="nav nav-sidebar">
+                <li class="active"><a href="#">Status <span class="sr-only">(current)</span></a></li>
+                <li><a href="#" data-toggle="modal" data-target="#addServiceModal">Add service</a></li>
+            </ul>
+        </div>
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+            <h1 class="page-header">Service dashboard</h1>
+
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Url</th>
+                        <th>Status</th>
+                        <th>Last checked</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody id="server-status">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Button trigger modal -->
+<button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#addServiceModal">
+  Launch demo modal
+</button>
+
+<!-- Modal -->
+<div class="modal fade" id="addServiceModal" tabindex="-1" role="dialog" aria-labelledby="addServiceModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <form id="add-service-form">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="addServiceModalLabel">Add service</h4>
+      </div>
+
+      <div class="modal-body">
+          <div class="form-group">
+            <label for="add-service-form-name">Service name</label>
+            <input type="text" class="form-control" id="add-service-form-name" placeholder="Name" required>
+          </div>
+          <div class="form-group">
+            <label for="add-service-form-url">URL</label>
+            <input type="url" class="form-control" id="add-service-form-url" placeholder="Url" required>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary" id="add-service-submit">Add service</button>
+      </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="vendor/jquery-3.2.1.min.js"></script>
+<script src="vendor/bootstrap-3.3.7.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
