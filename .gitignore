@@ -6,3 +6,5 @@ target
 .vertx
 file-uploads
 vertx_classpath.txt
+
+services.json

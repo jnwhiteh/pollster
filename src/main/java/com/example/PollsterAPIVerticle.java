@@ -3,8 +3,9 @@ package com.example;
 import com.example.api.AddServiceRequest;
 import com.example.api.AddServiceResponse;
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.file.FileSystem;
 import io.vertx.core.http.*;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -26,6 +27,7 @@ class PollsterAPIVerticle extends AbstractVerticle {
     private final Map<String,ServerStatusEntry> entries = new HashMap<>();
     private final PriorityQueue<String> deadlineHeap = new PriorityQueue<>(this::compareEntries);
     private HttpClient client;
+    private final String storageFilename = "services.json";
 
     private int compareEntries(String a, String b) {
         ServerStatusEntry aEntry = entries.get(a);
@@ -34,7 +36,7 @@ class PollsterAPIVerticle extends AbstractVerticle {
         return aEntry.lastCheck.compareTo(bEntry.lastCheck);
     }
 
-    public void start(Future<Void> startFuture) throws Exception {
+    public void start() throws Exception {
         HttpServer server = vertx.createHttpServer();
         Router router = Router.router(vertx);
 
@@ -46,26 +48,67 @@ class PollsterAPIVerticle extends AbstractVerticle {
 
         router.route("/*").handler(StaticHandler.create());
 
-        server.requestHandler(router::accept).listen(8080, r -> {
-            if (r.succeeded()) {
-                startFuture.complete();
-            } else {
-                startFuture.fail("Failed to start HTTP server: " + r.cause().toString());
-            }
+        server.requestHandler(router::accept).listen(8080);
+
+        // every second invoke the heap-check
+        vertx.setPeriodic(1000, this::handleTimer);
+        // every minute flush the current db status to disk
+        vertx.setPeriodic(60000, timerId -> {
+            flushToStorage();
         });
 
-        long timerID = vertx.setPeriodic(1000, this::handleTimer);
         HttpClientOptions options = new HttpClientOptions()
                 .setLogActivity(true)
                 .setMaxRedirects(5);
 
         client = vertx.createHttpClient(options);
 
-        // seed with some initial data
-        addEntry("google-ssl", "https://google.com/");
-        addEntry("google", "http://google.com/");
-        addEntry("Spotify", "http://www.spotify.com");
-        addEntry("Centralway", "http://www.centralway.com");
+        FileSystem fs = vertx.fileSystem();
+        fs.readFile(storageFilename, res -> {
+            if (res.succeeded()) {
+                Buffer buf = res.result();
+
+                JsonObject wrapperObj = buf.toJsonObject();
+                JsonArray arr = wrapperObj.getJsonArray("services");
+                for (int i = 0; i < arr.size(); i++) {
+                    JsonObject obj = arr.getJsonObject(i);
+                    ServerStatusEntry entry = obj.mapTo(ServerStatusEntry.class);
+                    entries.put(entry.id, entry);
+                    deadlineHeap.add(entry.id);
+                }
+                logger.info("Read {0} entries from storage", arr.size());
+            } else {
+                // something went wrong, but log and continue
+                logger.error("Failed when reading storage file", res.cause());
+
+                addEntry("google-ssl", "https://google.com/");
+                addEntry("google", "http://google.com/");
+            }
+        });
+    }
+
+    private void flushToStorage() {
+        FileSystem fs = vertx.fileSystem();
+
+        List<ServerStatusEntry> entryList = new ArrayList<>(entries.size());
+        entryList.addAll(entries.values());
+
+        // Pack it into JSON for the response
+        JsonArray array = new JsonArray(entryList);
+        JsonObject obj = new JsonObject();
+        obj.put("services", array);
+
+        Buffer buf = Buffer.buffer(obj.encodePrettily());
+        fs.writeFile(storageFilename, buf, result -> {
+            if (result.succeeded()) {
+                logger.info("Flushed {0} entries to {1}", entries.size(), storageFilename);
+            } else {
+                logger.error("Failed when writing to storage", result.cause());
+            }
+        });
+    }
+    public void stop() throws Exception {
+        flushToStorage();
     }
 
     private String addEntry(String name, String url) {
@@ -136,14 +179,12 @@ class PollsterAPIVerticle extends AbstractVerticle {
         }
     }
 
-    public void stop(Future<Void> stopFuture) throws Exception {
-    }
-
     private void handleAddServer(RoutingContext routingContext) {
         AddServiceRequest req = routingContext.getBodyAsJson().mapTo(AddServiceRequest.class);
 
         // Generate a new UUID and store the entry
         String id = addEntry(req.getName(), req.getUrl());
+        flushToStorage();
 
         // Return the new ID in the response
         AddServiceResponse res = new AddServiceResponse(id);
@@ -174,6 +215,7 @@ class PollsterAPIVerticle extends AbstractVerticle {
         if (present) {
             entries.remove(serverId);
             deadlineHeap.remove(serverId);
+            flushToStorage();
         }
 
         Integer status = present ? 200 : 404;
