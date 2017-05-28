@@ -111,7 +111,7 @@ class PollsterAPIVerticle extends AbstractVerticle {
         client.requestAbs(HttpMethod.GET, entry.url, response -> {
             logger.info("Got a response for {0} with status code {1} - {2}", entry.url, response.statusCode(), response.statusMessage());
 
-            String status = response.statusMessage();
+            String status = response.statusCode() == 200 ? "UP" : "DOWN";
             String lastCheck = hourMinuteFormatter.format(Instant.now());
             store.updateService(entry.id, status, lastCheck);
         }).exceptionHandler(entry.exceptionHandler)

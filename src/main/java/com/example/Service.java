@@ -25,7 +25,7 @@ public class Service {
         this.id = id;
         this.name = name;
         this.url = url;
-        this.status = "UNKNOWN";
+        this.status = "DOWN";
         this.lastCheck = "1970-01-01 00:00";
     }
 
